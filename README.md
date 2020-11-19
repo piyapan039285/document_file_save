@@ -31,18 +31,19 @@ void saveMultipleFiles(List<Uint8List> dataList, List<String> fileNameList, List
 ```
 import 'package:document_file_save/document_file_save.dart';
 
-//Save text file into Download folder.
+//Save multiple files
 List<int> textBytes = utf8.encode("Some data");
+List<int> textBytes2 = utf8.encode("Another data");
+DocumentFileSave.saveMultipleFiles([textBytes, textBytes2], ["text1.txt", "text2.txt"], ["text/plain", "text/plain"]);
+
+//Save single text file
 DocumentFileSave.saveFile(textBytes, "my_sample_file.txt", "text/plain");
 
-//Save pdf file into Download folder.
+//Save single pdf file
 DocumentFileSave.saveFile(pdfBytes, "my_sample_file.pdf", "appliation/pdf");
 
-//Save image file into Download folder.
+//Save single image file
 DocumentFileSave.saveFile(imageJPGBytes, "my_sample_file.jpg", "image/jpeg");
-
-//Save multiple files
-DocumentFileSave.saveMultipleFiles([pdfBytes, textBytes], ["my_sample_file.pdf", "my_sample_file.txt"], ["appliation/pdf", "text/plain"]);
 ```
 
 

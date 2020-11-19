@@ -1,8 +1,7 @@
 name: document_file_save
-description: A new flutter plugin project.
-version: 0.0.1
-author:
-homepage:
+description: Save bytes data into Download folder (Android), or show save dialog (iOS).
+version: 1.0.0
+homepage: https://github.com/piyapan039285/document_file_save
 
 environment:
   sdk: ">=2.7.0 <3.0.0"

@@ -16,39 +16,19 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
 
-    // this is for test saving file only.
-    // List<int> bytes = utf8.encode("Some data 2 sadfdsafdsaf  sdfds f สวัสดี วันนี้ทำงานสนุกมาก");
-    // DocumentFileSave.saveFile(bytes, "my test text file.txt", "text/plain");
+    List<int> htmlBytes = utf8.encode("<h1>Header 1</h1><p>This is sample text</p>");
+    List<int> textBytes = utf8.encode("Some data");
 
-    List<int> bytes2 = utf8.encode("<h1>Header 1</h1><p>This is sample text</p>");
-    DocumentFileSave.saveFile(bytes2, "my test html file.html", "text/html");
-  }
+    // save multiple files
+    DocumentFileSave.saveMultipleFiles([htmlBytes, textBytes], ["htmlfile.html", "textfile.txt"], ["text/html", "text/plain"]);
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      platformVersion = await DocumentFileSave.platformVersion;
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
+    // save single file
+    // DocumentFileSave.saveFile(htmlBytes, "my test html file.html", "text/html");
   }
 
   @override
@@ -56,10 +36,10 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('document_file_save Plugin'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+          child: Text('Please check file in Download folder (or Files App in iOS)'),
         ),
       ),
     );

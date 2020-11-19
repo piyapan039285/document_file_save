@@ -4,3 +4,7 @@
 ## 1.0.1
  - center popover view in iOS.
  - fix return type of function `saveFile`.
+
+## 1.0.2
+ - add function to save multiple files. (Useful in iOS because it will show dialog only once)
+ - fix permission checking on Android 6 - 9.

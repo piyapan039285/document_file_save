@@ -57,17 +57,17 @@ class DocumentFileSavePlugin: FlutterPlugin, MethodCallHandler, ActivityAware, P
       val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
       val value = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
       result.success(value)
-    } else if (call.method == "saveFile") {
+    } else if (call.method == "saveMultipleFiles") {
       var permissionGranted = true
 
       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && ActivityCompat.checkSelfPermission(currentActivity!!, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
           permissionGranted = false
 
       if (permissionGranted) {
-        val data: ByteArray = call.argument("data")!!
-        val fileName: String = call.argument("fileName")!!
-        val mimeType: String = call.argument("mimeType")!!
-        saveFile(data, fileName, mimeType)
+        val dataList: List<ByteArray> = call.argument("dataList")!!
+        val fileNameList: List<String> = call.argument("fileNameList")!!
+        val mimeTypeList: List<String> = call.argument("mimeTypeList")!!
+        saveMultipleFiles(dataList, fileNameList, mimeTypeList)
         result.success(null)
       } else {
         ActivityCompat.requestPermissions(currentActivity!!, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQ_CODE)
@@ -82,36 +82,44 @@ class DocumentFileSavePlugin: FlutterPlugin, MethodCallHandler, ActivityAware, P
     channel.setMethodCallHandler(null)
   }
 
-  private fun saveFile(data: ByteArray, fileName: String, mimeType: String) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      Log.i("piyapan039285", "save file using MediaStore")
+  private fun saveMultipleFiles(dataList: List<ByteArray>, fileNameList: List<String>, mimeTypeList: List<String>) {
+    val length = dataList.count()
 
-      val values = ContentValues().apply {
-        put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-        put(MediaStore.Downloads.MIME_TYPE, mimeType)
-        put(MediaStore.Downloads.IS_PENDING, 1)
-      }
+    for (i in 0 until length) {
+      val data = dataList[i]
+      val fileName = fileNameList[i]
+      val mimeType = mimeTypeList[i]
 
-      val resolver = context.contentResolver
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        Log.i("piyapan039285", "save file using MediaStore")
 
-      val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-
-      val itemUri = resolver.insert(collection, values)
-
-      if (itemUri != null) {
-        resolver.openFileDescriptor(itemUri, "w").use { it ->
-          ParcelFileDescriptor.AutoCloseOutputStream(it).write(data)
+        val values = ContentValues().apply {
+          put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+          put(MediaStore.Downloads.MIME_TYPE, mimeType)
+          put(MediaStore.Downloads.IS_PENDING, 1)
         }
-        values.clear()
-        values.put(MediaStore.Downloads.IS_PENDING, 0)
-        resolver.update(itemUri, values, null, null)
+
+        val resolver = context.contentResolver
+
+        val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+
+        val itemUri = resolver.insert(collection, values)
+
+        if (itemUri != null) {
+          resolver.openFileDescriptor(itemUri, "w").use { it ->
+            ParcelFileDescriptor.AutoCloseOutputStream(it).write(data)
+          }
+          values.clear()
+          values.put(MediaStore.Downloads.IS_PENDING, 0)
+          resolver.update(itemUri, values, null, null)
+        }
+      } else {
+        Log.i("piyapan039285", "save file using getExternalStoragePublicDirectory")
+        val file = File(Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS), fileName)
+        val fos = FileOutputStream(file)
+        fos.write(data)
+        fos.close()
       }
-    } else {
-      Log.i("piyapan039285", "save file using getExternalStoragePublicDirectory")
-      val file = File(Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS), fileName)
-      val fos = FileOutputStream(file)
-      fos.write(data)
-      fos.close()
     }
   }
 

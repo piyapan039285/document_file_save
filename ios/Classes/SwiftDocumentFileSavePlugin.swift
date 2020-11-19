@@ -14,27 +14,39 @@ public class SwiftDocumentFileSavePlugin: NSObject, FlutterPlugin {
         result("iOS " + UIDevice.current.systemVersion)
     } else if (call.method == "getBatteryPercentage") {
         result(UIDevice.current.batteryLevel)
-    } else if (call.method == "saveFile") {
+    } else if (call.method == "saveMultipleFiles") {
         let args = call.arguments as! Dictionary<String, Any>
-        let data = args["data"] as! FlutterStandardTypedData
-        let fileName = args["fileName"] as! String
-        let mimeType = args["mimeType"] as! String
-        saveFile(data: data, fileName: fileName, mimeType: mimeType)
+        let dataList = args["dataList"] as! [FlutterStandardTypedData]
+        let fileNameList = args["fileNameList"] as! [String]
+        let mimeTypeList = args["mimeTypeList"] as! [String]
+        saveMultipleFiles(dataList: dataList, fileNameList: fileNameList, mimeTypeList: mimeTypeList)
         result(nil)
     }
   }
   
-  private func saveFile(data: FlutterStandardTypedData, fileName: String, mimeType: String) {
+  private func saveMultipleFiles(dataList: [FlutterStandardTypedData], fileNameList: [String], mimeTypeList: [String]) {
     if let vc = UIApplication.shared.keyWindow?.rootViewController {
-        let temporaryFolder = URL(fileURLWithPath: NSTemporaryDirectory())
-        let temporaryFileURL = temporaryFolder.appendingPathComponent(fileName)
-        do {
-            try data.data.write(to: temporaryFileURL)
-        } catch {
-           print(error)
+        var temporaryFileURLList:[URL] = []
+        
+        let count = dataList.count
+        var i = 0
+        while i < count {
+            let data = dataList[i]
+            let fileName = fileNameList[i]
+            let temporaryFolder = URL(fileURLWithPath: NSTemporaryDirectory())
+            let temporaryFileURL = temporaryFolder.appendingPathComponent(fileName)
+            temporaryFileURLList.append(temporaryFileURL)
+            
+            do {
+                try data.data.write(to: temporaryFileURL)
+            } catch {
+               print(error)
+            }
+            
+            i = i + 1
         }
         
-        let activityController = UIActivityViewController(activityItems: [temporaryFileURL], applicationActivities: nil)
+        let activityController = UIActivityViewController(activityItems: temporaryFileURLList, applicationActivities: nil)
         activityController.excludedActivityTypes = [.airDrop, .postToTwitter, .assignToContact, .postToFlickr, .postToWeibo, .postToTwitter]
         if let popOver = activityController.popoverPresentationController {
           popOver.sourceView = vc.view

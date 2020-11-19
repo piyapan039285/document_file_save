@@ -18,15 +18,19 @@ class DocumentFileSave {
     return battery;
   }
 
-  static Future<void> saveFile(Uint8List data, String fileName, String mimeType) async {
+  static Future<void> saveMultipleFiles(List<Uint8List> dataList, List<String> fileNameList, List<String> mimeTypeList) async {
     try {
-      await _channel.invokeMethod('saveFile', {
-        "data": data,
-        "fileName": fileName,
-        "mimeType": mimeType
+      await _channel.invokeMethod('saveMultipleFiles', {
+        "dataList": dataList,
+        "fileNameList": fileNameList,
+        "mimeTypeList": mimeTypeList
       });
     } on PlatformException {
       rethrow;
     }
+  }
+
+  static Future<void> saveFile(Uint8List data, String fileName, String mimeType) async {
+    await saveMultipleFiles([data], [fileName], [mimeType]);
   }
 }

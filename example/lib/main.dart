@@ -27,6 +27,9 @@ class _MyAppState extends State<MyApp> {
     // save multiple files
     DocumentFileSave.saveMultipleFiles([htmlBytes, textBytes], ["htmlfile.html", "textfile.txt"], ["text/html", "text/plain"]);
 
+    // save multiple files (case that file have same name). system will automatically append number to filename.
+    //DocumentFileSave.saveMultipleFiles([htmlBytes, textBytes], ["file.txt", "file.txt"], ["text/html", "text/plain"]);
+
     // save single file
     // DocumentFileSave.saveFile(htmlBytes, "my test html file.html", "text/html");
   }

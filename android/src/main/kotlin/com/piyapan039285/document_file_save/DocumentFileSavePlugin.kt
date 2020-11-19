@@ -1,8 +1,11 @@
 package com.piyapan039285.document_file_save
 
+import android.Manifest
 import android.R.attr
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Environment
@@ -11,18 +14,26 @@ import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.NonNull
+import androidx.core.app.ActivityCompat
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 import java.io.File
 import java.io.FileOutputStream
 
 
 /** DocumentFileSavePlugin */
-class DocumentFileSavePlugin: FlutterPlugin, MethodCallHandler {
+class DocumentFileSavePlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.RequestPermissionsResultListener  {
   private lateinit var context: Context
+  private val REQ_CODE = 39285
+  private var currentActivity : Activity? = null
+  private var call: MethodCall? = null
+  private var result: Result? = null
 
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
@@ -37,6 +48,9 @@ class DocumentFileSavePlugin: FlutterPlugin, MethodCallHandler {
   }
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+    this.call = call
+    this.result = result
+
     if (call.method == "getPlatformVersion") {
       result.success("Android ${android.os.Build.VERSION.RELEASE}")
     } else if (call.method == "getBatteryPercentage") {
@@ -44,11 +58,21 @@ class DocumentFileSavePlugin: FlutterPlugin, MethodCallHandler {
       val value = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
       result.success(value)
     } else if (call.method == "saveFile") {
-      val data: ByteArray = call.argument("data")!!
-      val fileName: String = call.argument("fileName")!!
-      val mimeType: String = call.argument("mimeType")!!
-      saveFile(data, fileName, mimeType)
-      result.success(null)
+      var permissionGranted = true
+
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && ActivityCompat.checkSelfPermission(currentActivity!!, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+          permissionGranted = false
+
+      if (permissionGranted) {
+        val data: ByteArray = call.argument("data")!!
+        val fileName: String = call.argument("fileName")!!
+        val mimeType: String = call.argument("mimeType")!!
+        saveFile(data, fileName, mimeType)
+        result.success(null)
+      } else {
+        ActivityCompat.requestPermissions(currentActivity!!, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQ_CODE)
+      }
+
     } else {
       result.notImplemented()
     }
@@ -60,7 +84,7 @@ class DocumentFileSavePlugin: FlutterPlugin, MethodCallHandler {
 
   private fun saveFile(data: ByteArray, fileName: String, mimeType: String) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      Log.i("piyapan039285","save file using MediaStore")
+      Log.i("piyapan039285", "save file using MediaStore")
 
       val values = ContentValues().apply {
         put(MediaStore.Downloads.DISPLAY_NAME, fileName)
@@ -83,11 +107,43 @@ class DocumentFileSavePlugin: FlutterPlugin, MethodCallHandler {
         resolver.update(itemUri, values, null, null)
       }
     } else {
-      Log.i("piyapan039285","save file using getExternalStoragePublicDirectory")
+      Log.i("piyapan039285", "save file using getExternalStoragePublicDirectory")
       val file = File(Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS), fileName)
       val fos = FileOutputStream(file)
-      fos.write(attr.data)
+      fos.write(data)
       fos.close()
     }
+  }
+
+  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String?>?, grantResults: IntArray): Boolean {
+    if (requestCode == this.REQ_CODE) {
+      val granted = grantResults[0] == PackageManager.PERMISSION_GRANTED
+      if (granted) {
+        onMethodCall(call!!, result!!)
+      } else {
+        result?.error("0", "Permission denied", null)
+      }
+      return granted
+    }
+
+    return false
+  }
+
+  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    currentActivity = binding.activity
+    binding.addRequestPermissionsResultListener(this)
+  }
+
+  override fun onDetachedFromActivityForConfigChanges() {
+    currentActivity = null
+  }
+
+  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    currentActivity = binding.activity
+    binding.addRequestPermissionsResultListener(this)
+  }
+
+  override fun onDetachedFromActivity() {
+    currentActivity = null
   }
 }

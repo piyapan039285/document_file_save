@@ -38,6 +38,8 @@ public class SwiftDocumentFileSavePlugin: NSObject, FlutterPlugin {
         activityController.excludedActivityTypes = [.airDrop, .postToTwitter, .assignToContact, .postToFlickr, .postToWeibo, .postToTwitter]
         if let popOver = activityController.popoverPresentationController {
           popOver.sourceView = vc.view
+          popOver.sourceRect = CGRect(x: vc.view.bounds.midX, y: vc.view.bounds.midY, width: 0, height: 0)
+          popOver.permittedArrowDirections = UIPopoverArrowDirection(rawValue: 0)
         }
         
         vc.present(activityController, animated: true, completion: nil)

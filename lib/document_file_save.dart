@@ -18,10 +18,9 @@ class DocumentFileSave {
     return battery;
   }
 
-  static Future<bool> saveFile(Uint8List data, String fileName, String mimeType) async {
-    bool success = false;
+  static Future<void> saveFile(Uint8List data, String fileName, String mimeType) async {
     try {
-      success = await _channel.invokeMethod('saveFile', {
+      await _channel.invokeMethod('saveFile', {
         "data": data,
         "fileName": fileName,
         "mimeType": mimeType
@@ -29,6 +28,5 @@ class DocumentFileSave {
     } on PlatformException {
       rethrow;
     }
-    return success;
   }
 }

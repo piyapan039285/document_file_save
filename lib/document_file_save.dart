@@ -8,14 +8,12 @@ class DocumentFileSave {
   static const MethodChannel _channel =
       const MethodChannel('document_file_save');
 
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
+  static Future<String?> get platformVersion async {
+    return await _channel.invokeMethod('getPlatformVersion');
   }
 
-  static Future<void> get batteryPercentage async {
-    final int battery = await _channel.invokeMethod('getBatteryPercentage');
-    return battery;
+  static Future<int?> get batteryPercentage async {
+    return await _channel.invokeMethod('getBatteryPercentage');
   }
 
   static Future<void> saveMultipleFiles(List<Uint8List> dataList, List<String> fileNameList, List<String> mimeTypeList) async {
